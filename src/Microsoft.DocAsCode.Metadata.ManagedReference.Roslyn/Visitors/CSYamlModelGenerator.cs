@@ -540,7 +540,7 @@ namespace Microsoft.DocAsCode.Metadata.ManagedReference
                         GetMemberModifiers(symbol)
                     ),
                     SyntaxFactory.VariableDeclaration(
-                        GetTypeSyntax(symbol.Type),
+                        GetTypeSyntax(symbol.Type, symbol.NullableAnnotation),
                         SyntaxFactory.SingletonSeparatedList(
                             SyntaxFactory.VariableDeclarator(
                                 SyntaxFactory.Identifier(symbol.Name),
@@ -565,7 +565,7 @@ namespace Microsoft.DocAsCode.Metadata.ManagedReference
                     GetAttributes(symbol, filterVisitor),
                     SyntaxFactory.TokenList(GetMemberModifiers(symbol)),
                     SyntaxFactory.Token(SyntaxKind.EventKeyword),
-                    GetTypeSyntax(symbol.Type),
+                    GetTypeSyntax(symbol.Type, symbol.NullableAnnotation),
                     eii,
                     SyntaxFactory.Identifier(GetMemberName(symbol, filterVisitor)),
                     SyntaxFactory.AccessorList()
@@ -692,7 +692,6 @@ namespace Microsoft.DocAsCode.Metadata.ManagedReference
 
         private static string GetMemberName(IMethodSymbol symbol, IFilterVisitor filterVisitor)
         {
-            string name = symbol.Name;
             if (symbol.ExplicitInterfaceImplementations.Length == 0)
             {
                 return symbol.Name;
@@ -710,7 +709,6 @@ namespace Microsoft.DocAsCode.Metadata.ManagedReference
 
         private static string GetMemberName(IEventSymbol symbol, IFilterVisitor filterVisitor)
         {
-            string name = symbol.Name;
             if (symbol.ExplicitInterfaceImplementations.Length == 0)
             {
                 return symbol.Name;
@@ -728,7 +726,6 @@ namespace Microsoft.DocAsCode.Metadata.ManagedReference
 
         private static string GetMemberName(IPropertySymbol symbol, IFilterVisitor filterVisitor)
         {
-            string name = symbol.Name;
             if (symbol.ExplicitInterfaceImplementations.Length == 0)
             {
                 return symbol.Name;
@@ -873,12 +870,16 @@ namespace Microsoft.DocAsCode.Metadata.ManagedReference
                 {
                     return GetLiteralExpression(null, constant.Type);
                 }
+
+                // todo: I have no idea if this is correct
+                var effectiveNullableAnnotation = constant.IsNull ? NullableAnnotation.Annotated : NullableAnnotation.NotAnnotated;
+
                 var items = (from value in constant.Values
                              select GetLiteralExpression(value)).ToList();
                 if (items.TrueForAll(x => x != null))
                 {
                     return SyntaxFactory.ArrayCreationExpression(
-                        (ArrayTypeSyntax)GetTypeSyntax(constant.Type),
+                        (ArrayTypeSyntax)GetTypeSyntax(constant.Type, effectiveNullableAnnotation),
                         SyntaxFactory.InitializerExpression(
                             SyntaxKind.ArrayInitializerExpression,
                             SyntaxFactory.SeparatedList(
@@ -886,7 +887,7 @@ namespace Microsoft.DocAsCode.Metadata.ManagedReference
                                 select GetLiteralExpression(value))));
                 }
                 return SyntaxFactory.ArrayCreationExpression(
-                    (ArrayTypeSyntax)GetTypeSyntax(constant.Type));
+                    (ArrayTypeSyntax)GetTypeSyntax(constant.Type, effectiveNullableAnnotation));
             }
 
             var expr = GetLiteralExpression(constant.Value, constant.Type);
@@ -929,7 +930,7 @@ namespace Microsoft.DocAsCode.Metadata.ManagedReference
             {
                 if (type.IsValueType && !isNullable)
                 {
-                    return SyntaxFactory.DefaultExpression(GetTypeSyntax(type));
+                    return SyntaxFactory.DefaultExpression(GetTypeSyntax(type, NullableAnnotation.NotAnnotated));   // todo: not sure about this
                 }
                 return SyntaxFactory.LiteralExpression(
                     SyntaxKind.NullLiteralExpression,
@@ -948,7 +949,7 @@ namespace Microsoft.DocAsCode.Metadata.ManagedReference
             if (type.TypeKind == TypeKind.Enum)
             {
                 var namedType = (INamedTypeSymbol)type;
-                var enumType = GetTypeSyntax(namedType);
+                var enumType = GetTypeSyntax(namedType, NullableAnnotation.NotAnnotated);   // enums can have nullable annotations
                 var isFlags = namedType.GetAttributes().Any(attr => attr.AttributeClass.GetDocumentationCommentId() == "T:System.FlagsAttribute");
 
                 var pairs = from member in namedType.GetMembers().OfType<IFieldSymbol>()
@@ -982,10 +983,10 @@ namespace Microsoft.DocAsCode.Metadata.ManagedReference
                         value,
                         namedType.EnumUnderlyingType));
             }
-            if (value is ITypeSymbol)
+            if (value is ITypeSymbol typeSymbol)
             {
                 return SyntaxFactory.TypeOfExpression(
-                    GetTypeSyntax((ITypeSymbol)value));
+                    GetTypeSyntax(typeSymbol, NullableAnnotation.None));    // todo: not sure what this is supposed to be
             }
             Debug.Fail("Unknown default value!");
             return null;
@@ -1183,7 +1184,7 @@ namespace Microsoft.DocAsCode.Metadata.ManagedReference
             {
                 for (int i = 0; i < symbol.ConstraintTypes.Length; i++)
                 {
-                    yield return SyntaxFactory.TypeConstraint(GetTypeSyntax(symbol.ConstraintTypes[i]));
+                    yield return SyntaxFactory.TypeConstraint(GetTypeSyntax(symbol.ConstraintTypes[i], symbol.ConstraintNullableAnnotations[i]));
                 }
             }
             if (symbol.HasConstructorConstraint)
@@ -1232,7 +1233,7 @@ namespace Microsoft.DocAsCode.Metadata.ManagedReference
             return SyntaxFactory.BaseList(
                 SyntaxFactory.SingletonSeparatedList<BaseTypeSyntax>(
                     SyntaxFactory.SimpleBaseType(
-                        GetTypeSyntax(underlyingType))));
+                        GetTypeSyntax(underlyingType, NullableAnnotation.NotAnnotated))));  // enum base types can't have a nullable annotation
         }
 
         private static TypeParameterListSyntax GetTypeParameters(INamedTypeSymbol symbol)
