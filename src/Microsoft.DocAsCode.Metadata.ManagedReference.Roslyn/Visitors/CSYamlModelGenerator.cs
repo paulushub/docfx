@@ -797,7 +797,7 @@ namespace Microsoft.DocAsCode.Metadata.ManagedReference
             return SyntaxFactory.Parameter(
                 GetAttributes(parameter, filterVisitor, true),
                 SyntaxFactory.TokenList(GetParameterModifiers(parameter, isThisParameter)),
-                GetTypeSyntax(parameter.Type),
+                GetTypeSyntax(parameter.Type, parameter.NullableAnnotation),
                 SyntaxFactory.Identifier(parameter.Name),
                 GetDefaultValueClause(parameter));
         }
@@ -1019,7 +1019,7 @@ namespace Microsoft.DocAsCode.Metadata.ManagedReference
 
         private static IEnumerable<ExpressionSyntax> GetFlagExpressions<T>(IEnumerable<(string Name, T Value)> flags, T value, INamedTypeSymbol namedType) where T : unmanaged
         {
-            var enumType = GetTypeSyntax(namedType);
+            var enumType = GetTypeSyntax(namedType, namedType.NullableAnnotation); //TODO
             if (EqualityComparer<T>.Default.Equals(value, default))
             {
                 string defaultFlagName = flags.FirstOrDefault(f => EqualityComparer<T>.Default.Equals(f.Value, default)).Name;
@@ -1211,7 +1211,7 @@ namespace Microsoft.DocAsCode.Metadata.ManagedReference
             return SyntaxFactory.BaseList(
                 SyntaxFactory.SeparatedList<BaseTypeSyntax>(
                     from t in baseTypeList
-                    select SyntaxFactory.SimpleBaseType(GetTypeSyntax(t))));
+                    select SyntaxFactory.SimpleBaseType(GetTypeSyntax(t, NullableAnnotation.NotAnnotated))));   // can't extend a nullable base class
         }
 
         private static bool IsSymbolAccessible(ISymbol symbol)
@@ -1669,19 +1669,25 @@ namespace Microsoft.DocAsCode.Metadata.ManagedReference
 
         private static TypeSyntax GetMethodTypeSyntax(IMethodSymbol method)
         {
-            var typeSyntax = GetTypeSyntax(method.ReturnType);
+            var typeSyntax = GetTypeSyntax(method.ReturnType, method.ReturnNullableAnnotation);
             return GetRefType(typeSyntax, method.RefKind);
         }
 
         private static TypeSyntax GetPropertyTypeSyntax(IPropertySymbol property)
         {
-            var typeSyntax = GetTypeSyntax(property.Type);
+            var typeSyntax = GetTypeSyntax(property.Type, property.NullableAnnotation);
             return GetRefType(typeSyntax, property.RefKind);
         }
 
-        private static TypeSyntax GetTypeSyntax(ITypeSymbol type)
+        private static TypeSyntax GetTypeSyntax(ITypeSymbol type, NullableAnnotation nullableAnnotation)
         {
-            var name = NameVisitorCreator.GetCSharp(NameOptions.UseAlias | NameOptions.WithGenericParameter).GetName(type);
+            var name = NameVisitorCreator.GetCSharp(NameOptions.UseAlias | NameOptions.WithGenericParameter | NameOptions.WithNullableAnnotations).GetName(type);
+
+            if (nullableAnnotation == NullableAnnotation.Annotated)
+            {
+                name += "?";
+            }
+
             return SyntaxFactory.ParseTypeName(name);
         }
 
