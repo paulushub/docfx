@@ -7,6 +7,7 @@ namespace Microsoft.DocAsCode.Common
     using System.Collections.Generic;
     using System.IO;
     using System.Linq;
+    using System.Reflection;
     using System.Text.RegularExpressions;
 
     public static class PathUtility
@@ -338,6 +339,27 @@ namespace Microsoft.DocAsCode.Common
             }
 
             return Directory.Exists(path);
+        }
+
+        public static string GetDirectory(Assembly assembly)
+        {
+            var assemblyPath = assembly.Location;
+            if (!string.IsNullOrWhiteSpace(assemblyPath))
+            {
+                var assemblyDir = Path.GetDirectoryName(assemblyPath);
+                if (!string.IsNullOrWhiteSpace(assemblyDir) && Directory.Exists(assemblyDir))
+                {
+                    return assemblyDir;
+                }
+            }
+
+            assemblyPath = AppContext.BaseDirectory;
+            if (!string.IsNullOrWhiteSpace(assemblyPath) && Directory.Exists(assemblyPath))
+            {
+                return assemblyPath;
+            }
+
+            return AppDomain.CurrentDomain.BaseDirectory;
         }
     }
 }

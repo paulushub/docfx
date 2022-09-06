@@ -5,9 +5,12 @@ namespace Microsoft.DocAsCode.Build.Engine
 {
     using System;
     using System.Collections.Generic;
+    using System.Configuration.Assemblies;
     using System.IO;
     using System.Linq;
     using System.Reflection;
+
+    using Microsoft.DocAsCode.Common;
 
     [Serializable]
     public class ResourceFinder
@@ -65,6 +68,21 @@ namespace Microsoft.DocAsCode.Build.Engine
             if (File.Exists(fileName))
             {
                 return new ArchiveResourceReader(new FileStream(fileName, FileMode.Open, FileAccess.Read), fileName);
+            }
+
+            var assembly = _assembly ?? typeof(ResourceFinder).Assembly;
+            var assemblyDir = PathUtility.GetDirectory(assembly);
+            if (!string.IsNullOrWhiteSpace(assemblyDir) && Directory.Exists(assemblyDir))
+            {
+                var templateDir = Path.Combine(assemblyDir, Constants.TemplateDirectoryName);
+                if (Directory.Exists(templateDir))
+                {
+                    directory = Path.Combine(templateDir, name);
+                    if (Directory.Exists(directory))
+                    {
+                        return new LocalFileResourceReader(directory);
+                    }
+                }
             }
 
             return null;

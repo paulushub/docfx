@@ -47,7 +47,9 @@ namespace Microsoft.DocAsCode.Tests
             Assert.Equal(typeof(BuildCommand), commands[1].GetType());
             var buildCommand = (BuildCommand)commands[1];
             Assert.True(buildCommand.Config.Force);
-            Assert.Equal(@"Assets\docfx.json_metadata_build", buildCommand.Config.BaseDirectory);
+            var baseDir = buildCommand.Config.BaseDirectory;
+            Assert.EndsWith(@"Assets\docfx.json_metadata_build", baseDir, System.StringComparison.OrdinalIgnoreCase);
+//            Assert.Equal(@"Assets\docfx.json_metadata_build", buildCommand.Config.BaseDirectory);
 
             args = new string[] { "Assets/docfx.json_empty/docfx.json" };
             controller = ArgsParser.Instance.Parse(args);
@@ -127,7 +129,9 @@ namespace Microsoft.DocAsCode.Tests
             var buildCommand = (BuildCommand)command;
             Assert.True(buildCommand.Config.Force);
             Assert.True(buildCommand.Config.ForcePostProcess);
-            Assert.Equal(@"Assets\docfx.json_metadata_build", buildCommand.Config.BaseDirectory);
+            var baseDir = buildCommand.Config.BaseDirectory;
+            Assert.EndsWith(@"Assets\docfx.json_metadata_build", baseDir, System.StringComparison.OrdinalIgnoreCase);
+            //Assert.Equal(@"Assets\docfx.json_metadata_build", buildCommand.Config.BaseDirectory);
             Assert.Equal(@"output", buildCommand.Config.OutputFolder);
 
             args = new string[] { "build", "Assets/docfx.json_empty/docfx.json" };

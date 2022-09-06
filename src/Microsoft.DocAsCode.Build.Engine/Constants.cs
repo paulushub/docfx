@@ -12,6 +12,9 @@ namespace Microsoft.DocAsCode.Build.Engine
 
         public const string ManifestFileName = "manifest.json";
 
+        public const string TemplateDirectoryName = "templates";
+
+
         public static class OPSEnvironmentVariable
         {
             public const string SystemMetadata = "_op_systemMetadata";

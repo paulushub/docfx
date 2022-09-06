@@ -13,6 +13,13 @@
   </ItemGroup>
 
   <ItemGroup>
+	<None Include="../docfx.website.themes/default/**/*;../docfx.website.themes/common/**/*" LinkBase="templates/default" CopyToOutputDirectory="PreserveNewest" />
+	<None Include="../docfx.website.themes/default(zh-cn)/**/*" LinkBase="templates/default(zh-cn)" CopyToOutputDirectory="PreserveNewest" />
+	<None Include="../docfx.website.themes/pdf.default/**/*;../docfx.website.themes/common/**/*" LinkBase="templates/pdf.default" CopyToOutputDirectory="PreserveNewest" />
+	<None Include="../docfx.website.themes/statictoc/**/*;../docfx.website.themes/common/**/*" LinkBase="templates/statictoc" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+	
+  <ItemGroup>
     <ProjectReference Include="..\Microsoft.DocAsCode.Build.Common\Microsoft.DocAsCode.Build.Common.csproj" />
     <ProjectReference Include="..\Microsoft.DocAsCode.Build.ConceptualDocuments\Microsoft.DocAsCode.Build.ConceptualDocuments.csproj" />
     <ProjectReference Include="..\Microsoft.DocAsCode.Build.Engine\Microsoft.DocAsCode.Build.Engine.csproj" />
@@ -42,9 +49,5 @@
     <PackageReference Include="Microsoft.Owin.SelfHost" Version="4.2.2" />
     <PackageReference Include="Microsoft.Owin.StaticFiles" Version="4.2.2" />
   </ItemGroup>
-
-  <ItemGroup Condition="'$(TargetFramework)' == 'net472'">
-    <Reference Include="System" />
-    <Reference Include="Microsoft.CSharp" />
-  </ItemGroup>
+	
 </Project>

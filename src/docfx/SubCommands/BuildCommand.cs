@@ -104,7 +104,10 @@ namespace Microsoft.DocAsCode.SubCommands
                     throw new OptionParserException("Either provide config file or specify content files to start building documentation.");
                 }
 
-                config = new BuildJsonConfig();
+                config = new BuildJsonConfig()
+                {
+                    BaseDirectory = EnvironmentContext.BaseDirectory
+                };
                 MergeOptionsToConfig(options, config);
                 return config;
             }
@@ -116,7 +119,7 @@ namespace Microsoft.DocAsCode.SubCommands
                 Logger.LogError(message, code: ErrorCodes.Config.BuildConfigNotFound);
                 throw new DocumentException(message);
             }
-            config.BaseDirectory = Path.GetDirectoryName(configFile);
+            config.BaseDirectory = Path.GetDirectoryName(Path.GetFullPath(configFile));
 
             MergeOptionsToConfig(options, config);
             return config;

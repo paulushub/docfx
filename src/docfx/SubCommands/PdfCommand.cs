@@ -126,7 +126,7 @@ namespace Microsoft.DocAsCode.SubCommands
                 throw new DocumentException(message);
             }
 
-            config.BaseDirectory = Path.GetDirectoryName(configFile);
+            config.BaseDirectory = Path.GetDirectoryName(Path.GetFullPath(configFile));
 
             MergeOptionsToConfig(options, config);
             return config;
