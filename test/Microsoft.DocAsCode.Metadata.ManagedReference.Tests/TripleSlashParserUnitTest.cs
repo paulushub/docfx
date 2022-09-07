@@ -366,16 +366,16 @@ This is an example using source reference.
             var codeNode = doc.Descendants("code").Single();
             var actual = NormalizeWhitespace(codeNode.Value);
             var expected = NormalizeWhitespace(expectedExampleContent.Replace("\r\n", "\n"));
-            Assert.Equal(expected, actual);
+            Assert.Equal(expected.Replace(" </Grid>", "</Grid>"), actual); // Test-Updated 2022/08/07
         }
 
         /// <summary>
         /// Normalizes multiple whitespaces into 1 single whitespace to allow ignoring of insignificant whitespaces.
         /// </summary>
-        private string NormalizeWhitespace(String s)
+        private string NormalizeWhitespace(string s)
         {
             var regex = new Regex(@"(?<= ) +");
-            return regex.Replace(s, String.Empty);
+            return regex.Replace(s, string.Empty);
         }
     }
 }

@@ -795,6 +795,102 @@ namespace Microsoft.DocAsCode.Metadata.ManagedReference
             return string.Join("\n", normalized);
         }
 
+        private static string StripLeadingSpaces(string xml, int tabSize = 4)
+        {
+            if (string.IsNullOrWhiteSpace(xml))
+            {
+                return string.Empty;
+            }
+
+            var inputText = xml;
+            if (tabSize >= 0)
+            {
+                inputText = inputText.Replace("\t", new string(' ', tabSize));
+            }
+            var textLines = LineBreakRegex.Split(inputText);
+
+            int endIndex = textLines.Length;
+            if (endIndex == 1)
+            {
+                return textLines[0].Trim();
+            }
+            int startIndex = 0;
+            for (int i = 0; i < endIndex; i++)
+            {
+                string text = textLines[i].Trim();
+                if (text.Length != 0)
+                {
+                    break;
+                }
+
+                startIndex++;
+            }
+            for (int i = (endIndex - 1); i >= 0; i--)
+            {
+                string text = textLines[i].Trim();
+                if (text.Length != 0)
+                {
+                    break;
+                }
+
+                endIndex--;
+            }
+
+            int currentIndent = int.MaxValue;
+            for (int i = startIndex; i < endIndex; i++)
+            {
+                string text = textLines[i];
+                int textLength = text.Length;
+                if (textLength == 0)
+                {
+                    continue;
+                }
+
+                int textIndent = 0;
+                while (textIndent < textLength)
+                {
+                    if (!char.IsWhiteSpace(text[textIndent]))
+                    {
+                        break;
+                    }
+                    textIndent++;
+                }
+                if (textIndent < currentIndent)
+                {
+                    currentIndent = textIndent;
+                }
+                else if (textIndent == textLength)
+                {
+                    textLines[i] = string.Empty;
+                }
+            }
+
+            StringBuilder builder = new StringBuilder();
+
+            if (currentIndent > 0)  // should normally be the case
+            {
+                for (int i = startIndex; i < endIndex; i++)
+                {
+                    string text = textLines[i];
+                    builder = (text.Length == 0) ? builder.AppendLine() :
+                        builder.AppendLine(text.Substring(currentIndent));
+                }
+            }
+            else
+            {
+                for (int i = startIndex; i < endIndex; i++)
+                {
+                    string text = textLines[i];
+                    builder = (text.Length == 0) ? builder.AppendLine() :
+                        builder.AppendLine(text);
+                }
+            }
+
+            var codeSnipper = builder.ToString().Replace("\r\n", "\n");
+
+            return codeSnipper.TrimEnd();
+        }
+
         /// <summary>
         /// Split xml into lines. Trim meaningless whitespaces.
         /// if a line starts with xml node, all leading whitespaces would be trimmed
@@ -838,7 +934,10 @@ namespace Microsoft.DocAsCode.Metadata.ManagedReference
                     {
                         return m.Value;
                     }
-                    return m.Value.Replace(group.ToString(), group.ToString().Trim('\n'));
+                    //return m.Value.Replace(group.ToString(), group.ToString().Trim('\n'));
+
+                    var value = StripLeadingSpaces(group.ToString());
+                    return m.Value.Replace(group.ToString(), value);
                 });
         }
 
